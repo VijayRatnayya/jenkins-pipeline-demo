@@ -6,7 +6,7 @@ pipeline {
 
         stage('Build') {
             steps {
-                echo 'Building application -Version 2'
+                echo 'Building application - Webhook Test'
                 sh 'pwd'
                 sh 'ls -la'
             }
