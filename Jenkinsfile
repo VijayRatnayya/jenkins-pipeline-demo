@@ -56,6 +56,41 @@ pipeline {
                 '''
             }
         }
+
+        stage('Deploy to Tomcat') {
+            steps {
+                withCredentials([usernamePassword(
+                    credentialsId: 'tomcat-credentials',
+                    usernameVariable: 'TOMCAT_USER',
+                    passwordVariable: 'TOMCAT_PASS'
+                )]) {
+                    sh '''
+                        echo "Deploying WAR to Tomcat..."
+
+                        curl --fail --silent --show-error \
+                          --user "$TOMCAT_USER:$TOMCAT_PASS" \
+                          --upload-file target/jenkins-webapp.war \
+                          "http://localhost:8081/manager/text/deploy?path=/jenkins-webapp&update=true"
+
+                        echo "WAR deployment completed successfully!"
+                    '''
+                }
+            }
+        }
+
+        stage('Verify Deployment') {
+            steps {
+                sh '''
+                    echo "Verifying deployed application..."
+
+                    curl --fail --silent \
+                      http://localhost:8081/jenkins-webapp/hello
+
+                    echo
+                    echo "Application verification completed successfully!"
+                '''
+            }
+        }
     }
 
     post {
