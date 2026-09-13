@@ -1,49 +1,74 @@
 pipeline {
 
-    agent any
+    agent {
+        label 'linux-agent'
+    }
 
     stages {
 
-        stage('Build') {
+        stage('Checkout') {
             steps {
-                echo 'Building application - Webhook Test'
-                sh 'pwd'
-                sh 'ls -la'
+                echo 'Cloning source code from GitHub'
+                checkout scm
+            }
+        }
+
+        stage('Verify Environment') {
+            steps {
+                sh '''
+                    echo "Node: $NODE_NAME"
+                    echo "Workspace: $WORKSPACE"
+                    java -version
+                    mvn -version
+                '''
+            }
+        }
+
+        stage('Maven Clean') {
+            steps {
+                sh 'mvn clean'
+            }
+        }
+
+        stage('Compile') {
+            steps {
+                sh 'mvn compile'
             }
         }
 
         stage('Test') {
             steps {
-                echo 'Testing application'
-                sh 'java -version'
+                sh 'mvn test'
             }
         }
 
-        stage('Code Quality') {
+        stage('Package') {
             steps {
-                echo 'Checking code quality'
+                sh 'mvn package'
             }
         }
 
-        stage('Deploy') {
+        stage('Verify WAR') {
             steps {
-                echo 'Deploying application'
+                sh '''
+                    echo "Generated WAR files:"
+                    find target -name "*.war" -type f
+                '''
             }
         }
     }
 
     post {
-
         success {
-            echo 'Pipeline completed successfully'
+            echo 'Maven CI Build completed successfully!'
         }
 
         failure {
-            echo 'Pipeline failed'
+            echo 'Maven CI Build failed!'
         }
 
         always {
-            echo 'Pipeline execution completed'
+            echo 'Pipeline execution completed.'
         }
     }
 }
